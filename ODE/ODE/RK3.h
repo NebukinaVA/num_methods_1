@@ -4,18 +4,18 @@
 #include <map>
 #include <iterator>
 
-// L, R - по условию заданы и постоянны 
-// E0, w - изменяемые параметры
+// L, R - given constant conditions
+// E0, w - variable parameters
 // dI/dx = sin(w*x)*E0/L - R*I/L = f(I, x)
-// остановка счета по выполнению заданного числа шагов
+// calculation stops when n steps are done
 
 class VC // variable current
 {
 private:
-	double E0, w;
+	double E0, w; // given conditions (may be variable)
 	double L = 2.5;
 	double R = 6.21;
-	long int n; // кол-во шагов
+	long int n; // number of steps
 	std::map<long double, long double> results;  // (x, I)
 	long double func(long double x, long double I)
 	{
@@ -28,7 +28,7 @@ public:
 		w = _w;
 		n = _n;
 	}
-	long double RK3(long double h, long double xn = 0.0, long double In = 1.0)
+	long double RK3(long double xn = 0.0, long double In = 1.0, long double h = 0.01)
 	{
 
 		long double k1 = func(xn, In);
@@ -66,9 +66,12 @@ public:
 			xhalf = xn + h / 0.2;
 			xn += h;
 			results.insert(std::make_pair(xn, In));
-			
 		}
 		return results;
+	}
+	long double ExactSolution(long double x0, long double I0)
+	{
+		return ((E0*exp(R / L)*(sin(w*x0)*R - w * L*cos(w*x0)) + E0 * w*L) / (pow(w, 2.0) * L * 2 + pow(R, 2.0)) + I0);
 	}
 	friend std::ostream & operator<<(std::ostream &out, VC &vc)
 	{
