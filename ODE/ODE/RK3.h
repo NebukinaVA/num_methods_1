@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <map>
+#include <vector>
 #include <iterator>
 
 // L, R - given constant conditions
@@ -16,7 +17,8 @@ private:
 	double L = 2.5;
 	double R = 6.21;
 	long int n; // number of steps
-	std::map<long double, long double> results;  // (x, I)
+	std::vector<long double> arg; //x
+	std::vector<long double> res; //I
 	long double func(long double x, long double I)
 	{
 		return (sin(w*x)*E0 / L - R * I / L);
@@ -37,15 +39,16 @@ public:
 		In += h * (k1 + 4.0 * k2 + k3) / 6.0;
 		return In;
 	}
-	std::map<long double, long double> calculate(long double h, long double eps = 1e-3, long double x0 = 0.0, long double I0 = 1.0)
+	std::vector<long double> calculate(long double h, long double eps = 1e-3, long double x0 = 0.0, long double I0 = 1.0)
 	{
-		results.insert(std::make_pair(x0, I0));
+		arg.push_back(x0);
+		res.push_back(I0);
 		long double xn = x0;
 		long double In = I0;
 		long double xhalf = x0;
 		long double Ihalf;
 		long double S;
-		for (int i = 0; i < n; i++)
+		for (long int i = 0; i < n; i++)
 		{
 			Ihalf = RK3(xn, In, h / 2.0);
 			S = (RK3(xhalf, Ihalf, h / 2.0) - RK3(xn, In, h)) / 7.0;
@@ -65,9 +68,10 @@ public:
 			}
 			xhalf = xn + h / 0.2;
 			xn += h;
-			results.insert(std::make_pair(xn, In));
+			arg.insert(arg.begin() + i + 1, xn);
+			res.insert(res.begin() + i + 1, In);
 		}
-		return results;
+		return res;
 	}
 	long double ExactSolution(long double x0, long double I0)
 	{
@@ -75,15 +79,12 @@ public:
 	}
 	friend std::ostream & operator<<(std::ostream &out, VC &vc)
 	{
-		if (vc.results.empty())
+		if (vc.res.empty())
 			out << "There are no calculated results yet.";
 		else {
-			std::map<long double, long double>::iterator it;
-			long int i = 0;
-			for (it = vc.results.begin(); it != vc.results.end(); ++it)
+			for (long int i = 0; i < vc.res.size(); i++)
 			{
-				out << "x" << i << " = " << it->first << ",  " << "I" << i << " = " << it->second << std::endl;
-				++i;
+				out << "x" << i << " = " << vc.arg[i] << ",  " << "I" << i << " = " << vc.res[i] << std::endl;
 			}
 		}
 		return out;
