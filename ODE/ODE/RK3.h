@@ -39,7 +39,22 @@ public:
 		In += h * (k1 + 4.0 * k2 + k3) / 6.0;
 		return In;
 	}
-	std::vector<long double> calculate(long double h, long double eps = 1e-3, long double x0 = 0.0, long double I0 = 1.0)
+	std::vector<long double> calculate(long double h, long double x0 = 0.0, long double I0 = 1.0)
+	{
+		arg.push_back(x0);
+		res.push_back(I0);
+		long double xn = x0;
+		long double In = I0;
+		for (long int i = 0; i < n; i++)
+		{
+			In = RK3(xn, In, h);
+			xn += h;
+			arg.insert(arg.begin() + i + 1, xn);
+			res.insert(res.begin() + i + 1, In);
+		}
+		return res;
+	}
+	std::vector<long double> calculate_w_error(long double h, long double eps = 1e-3, long double x0 = 0.0, long double I0 = 1.0)
 	{
 		arg.push_back(x0);
 		res.push_back(I0);
