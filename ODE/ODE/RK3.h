@@ -72,6 +72,7 @@ public:
 	}
 	std::vector<long double> calculate_w_error()
 	{
+		exres.push_back(I0);
 		steps.push_back(0.0);
 		arg.push_back(x0);
 		res.push_back(I0);
