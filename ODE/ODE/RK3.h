@@ -19,6 +19,9 @@ private:
 	long int n; // number of steps
 	std::vector<long double> arg; //x
 	std::vector<long double> res; //I
+	std::vector<long double> steps; //h
+	std::vector<long double> ss; //S
+	std::vector<long double> exres; //exact result
 	long double func(long double x, long double I)
 	{
 		return (sin(w*x)*E0 / L - R * I / L);
@@ -41,8 +44,11 @@ public:
 	}
 	std::vector<long double> calculate(long double h, long double x0 = 0.0, long double I0 = 1.0)
 	{
+		exres.push_back(I0);
+		steps.push_back(h);
 		arg.push_back(x0);
 		res.push_back(I0);
+		long double exI = I0;
 		long double xn = x0;
 		long double In = I0;
 		for (long int i = 0; i < n; i++)
@@ -51,13 +57,18 @@ public:
 			xn += h;
 			arg.insert(arg.begin() + i + 1, xn);
 			res.insert(res.begin() + i + 1, In);
+			steps.insert(steps.begin() + i + 1, h);
+			exI = ExactSolution(xn, exI);
+			exres.insert(exres.begin() + i + 1, exI);
 		}
 		return res;
 	}
 	std::vector<long double> calculate_w_error(long double h, long double eps = 1e-3, long double x0 = 0.0, long double I0 = 1.0)
 	{
+		steps.push_back(0.0);
 		arg.push_back(x0);
 		res.push_back(I0);
+		long double exI = I0;
 		long double xn = x0;
 		long double In = I0;
 		long double xhalf = x0;
@@ -67,6 +78,7 @@ public:
 		{
 			Ihalf = RK3(xn, In, h / 2.0);
 			S = (RK3(xhalf, Ihalf, h / 2.0) - RK3(xn, In, h)) / 7.0;
+			steps.insert(steps.begin() + i + 1, S);
 			if ((abs(S) >= (eps / 16.0)) && (abs(S) <= eps))
 			{
 				In = RK3(xn, In, h);
@@ -85,6 +97,9 @@ public:
 			xn += h;
 			arg.insert(arg.begin() + i + 1, xn);
 			res.insert(res.begin() + i + 1, In);
+			steps.insert(steps.begin() + i + 1, h);
+			exI = ExactSolution(xn, exI);
+			exres.insert(exres.begin() + i + 1, exI);
 		}
 		return res;
 	}
