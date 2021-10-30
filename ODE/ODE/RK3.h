@@ -13,9 +13,9 @@
 class VC // variable current
 {
 private:
-	double E0, w; // given conditions (may be variable)
-	double L = 2.5;
-	double R = 6.21;
+	long double E0, w, L, R; // given conditions (may be variable)
+	long double I0, x0;
+	long double h, eps, xmax; 
 	long int n; // number of steps
 	std::vector<long double> arg; //x
 	std::vector<long double> res; //I
@@ -27,13 +27,20 @@ private:
 		return (sin(w*x)*E0 / L - R * I / L);
 	}
 public:
-	VC(long int _n, double _E0 = 4.2, double _w = 3.2)
+	VC(long double _x0, long double _I0, long double _L, long double _R, long double _E0, long double _w, long double _h, long int _n, long double _eps, long double _xmax)
 	{
+		x0 = _x0;
+		I0 = _I0;
+		L = _L;
+		R = _R;
 		E0 = _E0;
 		w = _w;
+		h = _h;
 		n = _n;
+		eps = _eps;
+		xmax = _xmax;
 	}
-	long double RK3(long double xn = 0.0, long double In = 1.0, long double h = 0.01)
+	long double RK3(long double xn, long double In, long double h)
 	{
 
 		long double k1 = func(xn, In);
@@ -42,7 +49,7 @@ public:
 		In += h * (k1 + 4.0 * k2 + k3) / 6.0;
 		return In;
 	}
-	std::vector<long double> calculate(long double h, long double x0 = 0.0, long double I0 = 1.0)
+	std::vector<long double> calculate()
 	{
 		exres.push_back(I0);
 		steps.push_back(h);
@@ -63,7 +70,7 @@ public:
 		}
 		return res;
 	}
-	std::vector<long double> calculate_w_error(long double h, long double eps = 1e-3, long double x0 = 0.0, long double I0 = 1.0)
+	std::vector<long double> calculate_w_error()
 	{
 		steps.push_back(0.0);
 		arg.push_back(x0);
