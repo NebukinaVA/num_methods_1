@@ -53,9 +53,9 @@ public:
 	{
 		exres.push_back(I0);
 		steps.push_back(h);
+		steps.push_back(h);
 		arg.push_back(x0);
 		res.push_back(I0);
-		long double exI = I0;
 		long double xn = x0;
 		long double In = I0;
 		for (long int i = 0; i < n; i++)
@@ -65,8 +65,7 @@ public:
 			arg.insert(arg.begin() + i + 1, xn);
 			res.insert(res.begin() + i + 1, In);
 			steps.insert(steps.begin() + i + 1, h);
-			exI = ExactSolution(xn, exI);
-			exres.insert(exres.begin() + i + 1, exI);
+			exres.insert(exres.begin() + i + 1, ExactSolution(xn));
 		}
 		return res;
 	}
@@ -74,9 +73,9 @@ public:
 	{
 		exres.push_back(I0);
 		steps.push_back(0.0);
+		steps.push_back(h);
 		arg.push_back(x0);
 		res.push_back(I0);
-		long double exI = I0;
 		long double xn = x0;
 		long double In = I0;
 		long double xhalf = x0;
@@ -86,7 +85,6 @@ public:
 		{
 			Ihalf = RK3(xn, In, h / 2.0);
 			S = (RK3(xhalf, Ihalf, h / 2.0) - RK3(xn, In, h)) / 7.0;
-			steps.insert(steps.begin() + i + 1, S);
 			if ((abs(S) >= (eps / 16.0)) && (abs(S) <= eps))
 			{
 				In = RK3(xn, In, h);
@@ -103,17 +101,17 @@ public:
 			}
 			xhalf = xn + h / 0.2;
 			xn += h;
+			ss.insert(ss.begin() + i + 1, S);
 			arg.insert(arg.begin() + i + 1, xn);
 			res.insert(res.begin() + i + 1, In);
-			steps.insert(steps.begin() + i + 1, h);
-			exI = ExactSolution(xn, exI);
-			exres.insert(exres.begin() + i + 1, exI);
+			steps.insert(steps.begin() + i + 2, h);
+			exres.insert(exres.begin() + i + 1, ExactSolution(xn));
 		}
 		return res;
 	}
-	long double ExactSolution(long double x0, long double I0)
+	long double ExactSolution(long double x)
 	{
-		return ((E0*exp(R / L)*(sin(w*x0)*R - w * L*cos(w*x0)) + E0 * w*L) / (pow(w, 2.0) * L * 2 + pow(R, 2.0)) + I0);
+		return (E0*(R*sin(w*x) - L * w*cos(w*x) + L * w*exp(-R * x / L)) / (L ^ 2 * w ^ 2 + R ^ 2) + I0 * exp(-R * x / L));
 	}
 	friend std::ostream & operator<<(std::ostream &out, VC &vc)
 	{
