@@ -22,6 +22,8 @@ private:
 	std::vector<long double> steps; //h
 	std::vector<long double> ss; //S
 	std::vector<long double> exres; //exact result
+	std::vector<long int> hinc;  // total step increases
+	std::vector<long int> hdec;  // total step decreases
 	long double func(long double x, long double I)
 	{
 		return (sin(w*x)*E0 / L - R * I / L);
@@ -56,6 +58,8 @@ public:
 		steps.push_back(h);
 		arg.push_back(x0);
 		res.push_back(I0);
+		hinc.push_back(0);
+		hdec.push_back(0);
 		long double xn = x0;
 		long double In = I0;
 		for (long int i = 0; i < n; i++)
@@ -66,6 +70,8 @@ public:
 			res.insert(res.begin() + i + 1, In);
 			steps.insert(steps.begin() + i + 1, h);
 			exres.insert(exres.begin() + i + 1, ExactSolution(xn));
+			hinc.insert(hinc.begin() + i + 1, 0);
+			hdec.insert(hdec.begin() + i + 1, 0);
 		}
 		return res;
 	}
@@ -76,6 +82,8 @@ public:
 		steps.push_back(h);
 		arg.push_back(x0);
 		res.push_back(I0);
+		hinc.push_back(0);
+		hdec.push_back(0);
 		long double xn = x0;
 		long double In = I0;
 		long double xhalf = x0;
@@ -88,16 +96,22 @@ public:
 			if ((abs(S) >= (eps / 16.0)) && (abs(S) <= eps))
 			{
 				In = RK3(xn, In, h);
+				hinc.insert(hinc.begin() + i + 1, hinc[i]);
+				hdec.insert(hdec.begin() + i + 1, hdec[i]);
 			}
 			else if (abs(S) < (eps / 16.0))
 			{
 				In = RK3(xn, In, h);
 				h *= 2.0;
+				hinc.insert(hinc.begin() + i + 1, ++(hinc[i]));
+				hdec.insert(hdec.begin() + i + 1, hdec[i]);
 			}
 			else if (abs(S) > eps)
 			{
 				h = h / 2.0;
 				In = RK3(xn, In, h);
+				hinc.insert(hinc.begin() + i + 1, hinc[i]);
+				hdec.insert(hdec.begin() + i + 1, ++(hdec[i]));
 			}
 			xhalf = xn + h / 0.2;
 			xn += h;
