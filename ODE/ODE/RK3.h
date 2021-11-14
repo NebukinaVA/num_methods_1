@@ -15,10 +15,11 @@ class VC // variable current
 private:
 	long double E0, w, L, R; // given conditions (may be variable)
 	long double I0, x0;
-	long double h, eps, xmax; 
+	long double h, eps, xmax, prec; 
 	long int n; // number of steps
 	std::vector<long double> arg; //x
 	std::vector<long double> res; //I
+	std::vector<long double> reshalf; //I with cap
 	std::vector<long double> steps; //h
 	std::vector<long double> ss; //S
 	std::vector<long double> exres; //exact result
@@ -29,7 +30,7 @@ private:
 		return (sin(w*x)*E0 / L - R * I / L);
 	}
 public:
-	VC(long double _x0, long double _I0, long double _L, long double _R, long double _E0, long double _w, long double _h, long int _n, long double _eps, long double _xmax)
+	VC(long double _x0, long double _I0, long double _L, long double _R, long double _E0, long double _w, long double _h, long int _n, long double _eps, long double _xmax, long double _prec)
 	{
 		x0 = _x0;
 		I0 = _I0;
@@ -41,6 +42,7 @@ public:
 		n = _n;
 		eps = _eps;
 		xmax = _xmax;
+		prec = _prec;
 	}
 	long double RK3(long double xn, long double In, long double h)
 	{
@@ -62,8 +64,13 @@ public:
 		hdec.push_back(0);
 		long double xn = x0;
 		long double In = I0;
-		for (long int i = 0; i < n; i++)
+		long int i = 0;
+		while ((i < n) && (xn < xmax))
 		{
+			while ((xn < xmax - prec) && (xn + h > xmax + prec))
+			{
+				h /= 10.0;
+			}
 			In = RK3(xn, In, h);
 			xn += h;
 			arg.insert(arg.begin() + i + 1, xn);
@@ -72,16 +79,19 @@ public:
 			exres.insert(exres.begin() + i + 1, ExactSolution(xn));
 			hinc.insert(hinc.begin() + i + 1, 0);
 			hdec.insert(hdec.begin() + i + 1, 0);
+			i++;
 		}
 		return res;
 	}
 	std::vector<long double> calculate_w_error()
 	{
 		exres.push_back(I0);
-		steps.push_back(0.0);
+		ss.push_back(0.0);
+	//	steps.push_back(0.0);
 		steps.push_back(h);
 		arg.push_back(x0);
 		res.push_back(I0);
+		reshalf.push_back(0.0);
 		hinc.push_back(0);
 		hdec.push_back(0);
 		long double xn = x0;
@@ -89,7 +99,8 @@ public:
 		long double xhalf = x0;
 		long double Ihalf;
 		long double S;
-		for (long int i = 0; i < n; i++)
+		long int i = 0;
+		while ((i < n) && (xn < xmax))
 		{
 			Ihalf = RK3(xn, In, h / 2.0);
 			S = (RK3(xhalf, Ihalf, h / 2.0) - RK3(xn, In, h)) / 7.0;
@@ -115,11 +126,17 @@ public:
 			}
 			xhalf = xn + h / 0.2;
 			xn += h;
-			ss.insert(ss.begin() + i + 1, S);
+			reshalf.insert(reshalf.begin() + i + 1, Ihalf);
+			ss.insert(ss.begin() + i + 1, (S * 8.0));
 			arg.insert(arg.begin() + i + 1, xn);
 			res.insert(res.begin() + i + 1, In);
-			steps.insert(steps.begin() + i + 2, h);
+			steps.insert(steps.begin() + i, h);
 			exres.insert(exres.begin() + i + 1, ExactSolution(xn));
+			i++;
+			while ((xn < (xmax - prec)) && ((xn + h) > (xmax + prec)))
+			{
+				h /= 2.0;
+			}
 		}
 		return res;
 	}
