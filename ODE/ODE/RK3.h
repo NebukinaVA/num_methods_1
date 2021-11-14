@@ -67,10 +67,6 @@ public:
 		long int i = 0;
 		while ((i < n) && (xn < xmax))
 		{
-			while ((xn < xmax - prec) && (xn + h > xmax + prec))
-			{
-				h /= 10.0;
-			}
 			In = RK3(xn, In, h);
 			xn += h;
 			arg.insert(arg.begin() + i + 1, xn);
@@ -80,6 +76,10 @@ public:
 			hinc.insert(hinc.begin() + i + 1, 0);
 			hdec.insert(hdec.begin() + i + 1, 0);
 			i++;
+			while ((xn < xmax - prec) && (xn + h > xmax + prec))
+			{
+				h /= 10.0;
+			}
 		}
 		return res;
 	}
@@ -88,7 +88,7 @@ public:
 		exres.push_back(I0);
 		ss.push_back(0.0);
 	//	steps.push_back(0.0);
-		steps.push_back(h);
+	//	steps.push_back(h);
 		arg.push_back(x0);
 		res.push_back(I0);
 		reshalf.push_back(0.0);
