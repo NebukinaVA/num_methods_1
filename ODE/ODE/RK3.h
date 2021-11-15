@@ -56,39 +56,52 @@ public:
 	std::vector<long double> calculate()
 	{
 		exres.push_back(I0);
-		steps.push_back(h);
-		steps.push_back(h);
 		arg.push_back(x0);
 		res.push_back(I0);
 		hinc.push_back(0);
 		hdec.push_back(0);
+		reshalf.push_back(0.0);
 		long double xn = x0;
 		long double In = I0;
 		long int i = 0;
-		while ((i < n) && (xn < xmax))
+		while (i < n)
 		{
-			In = RK3(xn, In, h);
-			xn += h;
-			arg.insert(arg.begin() + i + 1, xn);
-			res.insert(res.begin() + i + 1, In);
-			steps.insert(steps.begin() + i + 1, h);
-			exres.insert(exres.begin() + i + 1, ExactSolution(xn));
-			hinc.insert(hinc.begin() + i + 1, 0);
-			hdec.insert(hdec.begin() + i + 1, 0);
-			i++;
-			while ((xn < xmax - prec) && (xn + h > xmax + prec))
+			if ((xn > (xmax - prec)) && (xn < xmax))
 			{
-				h /= 10.0;
+				break;
+			}
+			else {
+				if ((xn + h) > xmax)
+				{
+					while (((xn + h) > xmax) && (xn < (xmax - prec)))
+					{
+						h /= 2.0;
+					}
+					In = RK3(xn, In, h);
+					xn += h;
+				}
+				else
+				{
+					In = RK3(xn, In, h);
+					xn += h;
+				}
+				arg.insert(arg.begin() + i + 1, xn);
+				res.insert(res.begin() + i + 1, In);
+				steps.insert(steps.begin() + i, h);
+				exres.insert(exres.begin() + i + 1, ExactSolution(xn));
+				hinc.insert(hinc.begin() + i + 1, 0);
+				hdec.insert(hdec.begin() + i + 1, 0);
+				reshalf.insert(reshalf.begin() + i + 1, 0.0);
+				i++;
 			}
 		}
+		steps.push_back(h);
 		return res;
 	}
 	std::vector<long double> calculate_w_error()
 	{
 		exres.push_back(I0);
 		ss.push_back(0.0);
-	//	steps.push_back(0.0);
-	//	steps.push_back(h);
 		arg.push_back(x0);
 		res.push_back(I0);
 		reshalf.push_back(0.0);
@@ -189,11 +202,13 @@ public:
 				exres.insert(exres.begin() + i, ExactSolution(xn));
 			}		
 		}
+		steps.push_back(h);
 		return res;
 	}
 	long double ExactSolution(long double x)
 	{
-		return (E0*(R*sin(w*x) - L * w*cos(w*x) + L * w*exp(-R * x / L)) / (L ^ 2 * w ^ 2 + R ^ 2) + I0 * exp(-R * x / L));
+	//	return (E0*(R*sin(w*x) - L * w*cos(w*x) + L * w*exp(-R * x / L)) / (L ^ 2 * w ^ 2 + R ^ 2) + I0 * exp(-R * x / L));
+		return 0;
 	}
 	friend std::ostream & operator<<(std::ostream &out, VC &vc)
 	{
