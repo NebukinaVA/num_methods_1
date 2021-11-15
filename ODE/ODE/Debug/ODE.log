@@ -1,3 +1,4 @@
 ﻿  main.cpp
-c:\users\sadpo\documents\пми материалы\чм\задача 9\num_methods_1\ode\ode\rk3.h(153): warning C4018: <: несоответствие типов со знаком и без знака
-  ODE.vcxproj -> C:\Users\sadpo\Documents\ПМИ материалы\ЧМ\Задача 9\num_methods_1\ODE\Debug\ODE.exe
+c:\users\sadpo\documents\пми материалы\чм\задача 9\num_methods_1\ode\ode\rk3.h(196): error C2296: ^: недопустимо, левый операнд имеет тип "long double"
+c:\users\sadpo\documents\пми материалы\чм\задача 9\num_methods_1\ode\ode\rk3.h(196): error C2297: ^: недопустимо, правый оператор имеет тип "long double"
+c:\users\sadpo\documents\пми материалы\чм\задача 9\num_methods_1\ode\ode\rk3.h(203): warning C4018: <: несоответствие типов со знаком и без знака

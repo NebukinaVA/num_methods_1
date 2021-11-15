@@ -100,43 +100,94 @@ public:
 		long double Ihalf;
 		long double S;
 		long int i = 0;
-		while ((i < n) && (xn < xmax))
+		while (i < n)
 		{
-			Ihalf = RK3(xn, In, h / 2.0);
-			S = (RK3(xhalf, Ihalf, h / 2.0) - RK3(xn, In, h)) / 7.0;
-			if ((abs(S) >= (eps / 16.0)) && (abs(S) <= eps))
+			if ((xn > (xmax - prec)) && (xn < xmax))
 			{
-				In = RK3(xn, In, h);
-				hinc.insert(hinc.begin() + i + 1, hinc[i]);
-				hdec.insert(hdec.begin() + i + 1, hdec[i]);
-			}
-			else if (abs(S) < (eps / 16.0))
+				break;
+			}			
+			else
 			{
-				In = RK3(xn, In, h);
-				h *= 2.0;
-				hinc.insert(hinc.begin() + i + 1, ++(hinc[i]));
-				hdec.insert(hdec.begin() + i + 1, hdec[i]);
-			}
-			else if (abs(S) > eps)
-			{
-				h = h / 2.0;
-				In = RK3(xn, In, h);
-				hinc.insert(hinc.begin() + i + 1, hinc[i]);
-				hdec.insert(hdec.begin() + i + 1, ++(hdec[i]));
-			}
-			xhalf = xn + h / 0.2;
-			xn += h;
-			reshalf.insert(reshalf.begin() + i + 1, Ihalf);
-			ss.insert(ss.begin() + i + 1, (S * 8.0));
-			arg.insert(arg.begin() + i + 1, xn);
-			res.insert(res.begin() + i + 1, In);
-			steps.insert(steps.begin() + i, h);
-			exres.insert(exres.begin() + i + 1, ExactSolution(xn));
-			i++;
-			while ((xn < (xmax - prec)) && ((xn + h) > (xmax + prec)))
-			{
-				h /= 2.0;
-			}
+				Ihalf = RK3(xn, In, h / 2.0);
+				S = (RK3(xhalf, Ihalf, h / 2.0) - RK3(xn, In, h)) / 7.0;
+				if ((abs(S) >= (eps / 16.0)) && (abs(S) <= eps))
+				{
+					if ((xn + h) > xmax)
+					{
+						while (((xn + h) > xmax) && (xn < (xmax - prec)))
+						{
+							h /= 2.0;
+						}
+						xhalf += h / 2.0;
+						xn += h;
+						In = RK3(xn, In, h);
+						hinc.insert(hinc.begin() + i + 1, hinc[i]);
+						hdec.insert(hdec.begin() + i + 1, ++(hdec[i]));
+					}
+					else
+					{
+						In = RK3(xn, In, h);
+						xhalf = xn + h / 2.0;
+						xn += h;
+						hinc.insert(hinc.begin() + i + 1, hinc[i]);
+						hdec.insert(hdec.begin() + i + 1, hdec[i]);
+					}
+
+				}
+				else if (abs(S) < (eps / 16.0))
+				{
+					if ((xn + h) > xmax)
+					{
+						while (((xn + h) > xmax) && (xn < (xmax - prec)))
+						{
+							h /= 2.0;
+						}
+						xhalf += h / 2.0;
+						xn += h;
+						In = RK3(xn, In, h);
+						hinc.insert(hinc.begin() + i + 1, hinc[i]);
+						hdec.insert(hdec.begin() + i + 1, ++(hdec[i]));
+					}
+					else {
+						In = RK3(xn, In, h);
+						xhalf = xn + h / 2.0;
+						xn += h;
+						h *= 2.0;
+						hinc.insert(hinc.begin() + i + 1, ++(hinc[i]));
+						hdec.insert(hdec.begin() + i + 1, hdec[i]);
+					}
+				}
+				else if (abs(S) > eps)
+				{
+					if ((xn + h) > xmax)
+					{
+						while (((xn + h) > xmax) && (xn < (xmax - prec)))
+						{
+							h /= 2.0;
+						}
+						xhalf += h / 2.0;
+						xn += h;
+						In = RK3(xn, In, h);
+						hinc.insert(hinc.begin() + i + 1, hinc[i]);
+						hdec.insert(hdec.begin() + i + 1, ++(hdec[i]));
+					}
+					else {
+						h = h / 2.0;
+						In = RK3(xn, In, h);
+						xhalf = xn + h / 2.0;
+						xn += h;
+						hinc.insert(hinc.begin() + i + 1, hinc[i]);
+						hdec.insert(hdec.begin() + i + 1, ++(hdec[i]));
+					}
+				}
+				i++;
+				reshalf.insert(reshalf.begin() + i, Ihalf);
+				ss.insert(ss.begin() + i, (S * 8.0));
+				arg.insert(arg.begin() + i, xn);
+				res.insert(res.begin() + i, In);
+				steps.insert(steps.begin() + (i - 1), h);
+				exres.insert(exres.begin() + i, ExactSolution(xn));
+			}		
 		}
 		return res;
 	}
