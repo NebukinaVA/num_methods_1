@@ -1,9 +1,7 @@
 #pragma once
 #include <iostream>
 #include <cmath>
-#include <map>
 #include <vector>
-#include <iterator>
 
 // L, R - given constant conditions
 // E0, w - variable parameters
@@ -13,24 +11,30 @@
 class VC // variable current
 {
 private:
-	long double E0, w, L, R; // given conditions (may be variable)
-	long double I0, x0;
-	long double h, eps, xmax, prec; 
-	long int n; // number of steps
-	std::vector<long double> arg; //x
-	std::vector<long double> res; //I
-	std::vector<long double> reshalf; //I with cap
-	std::vector<long double> steps; //h
-	std::vector<long double> ss; //S
-	std::vector<long double> exres; //exact result
-	std::vector<long int> hinc;  // total step increases
-	std::vector<long int> hdec;  // total step decreases
-	long double func(long double x, long double I)
+	double E0, w, L, R; // given conditions (may be variable)
+	double I0, x0;
+	double h, eps, xmax, prec; 
+	int n; // number of steps
+	int N = 0; // total steps
+	double Xn, Vn;
+	int inc = 0;
+	int dec = 0; // total inc dec
+	int Smin = 0, Smax = 0; // number of string with Smin, Smax
+	int hmax, hmin; //number of string with hmax, hmin
+	std::vector<double> arg; //x
+	std::vector<double> res; //I
+	std::vector<double> reshalf; //I with cap
+	std::vector<double> steps; //h
+	std::vector<double> ss; //S
+	std::vector<double> exres; //exact result
+	std::vector<int> hinc;  // total step increases
+	std::vector<int> hdec;  // total step decreases
+	double func(double x, double I)
 	{
 		return (sin(w*x)*E0 / L - R * I / L);
 	}
 public:
-	VC(long double _x0, long double _I0, long double _L, long double _R, long double _E0, long double _w, long double _h, long int _n, long double _eps, long double _xmax, long double _prec)
+	VC(double _x0, double _I0, double _L, double _R, double _E0, double _w, double _h, int _n, double _eps, double _xmax, double _prec)
 	{
 		x0 = _x0;
 		I0 = _I0;
@@ -44,17 +48,16 @@ public:
 		xmax = _xmax;
 		prec = _prec;
 	}
-	long double RK3(long double xn, long double In, long double h)
+	double RK3(double xn, double In, double h)
 	{
 
-		long double k1 = func(xn, In);
-		long double k2 = func(xn + h / 2.0, In + h * k1 / 2.0);
-//		long double k3 = func(xn + h, In + h * (-k1 + 2.0 * k2));
-		long double k3 = func(xn + h, In + h * (2.0 * k2 - k1));
+		double k1 = func(xn, In);
+		double k2 = func(xn + h / 2.0, In + h * k1 / 2.0);
+		double k3 = func(xn + h, In + h * (2.0 * k2 - k1));
 		In += h * (k1 + 4.0 * k2 + k3) / 6.0;
 		return In;
 	}
-	std::vector<long double> calculate()
+	std::vector<double> calculate()
 	{
 		exres.push_back(I0);
 		arg.push_back(x0);
@@ -64,9 +67,9 @@ public:
 		hdec.push_back(0);
 		steps.push_back(h);
 		reshalf.push_back(0.0);
-		long double xn = x0;
-		long double In = I0;
-		long int i = 0;
+		double xn = x0;
+		double In = I0;
+		int i = 0;
 		while (i < n)
 		{
 			if ((xn > (xmax - prec)) && (xn < xmax))
@@ -92,16 +95,21 @@ public:
 				res.insert(res.begin() + i + 1, In);
 				steps.insert(steps.begin() + i + 1, h);
 				exres.insert(exres.begin() + i + 1, ExactSolution(xn));
-				hinc.insert(hinc.begin() + i + 1, 0);
-				hdec.insert(hdec.begin() + i + 1, 0);
+				hinc.insert(hinc.begin() + i + 1, inc);
+				hdec.insert(hdec.begin() + i + 1, dec);
 				reshalf.insert(reshalf.begin() + i + 1, 0.0);
 				ss.insert(ss.begin() + i + 1, 0.0);
 				i++;
 			}
 		}
+		N = i;
+		Xn = arg[i];
+		Vn = res[i];
+		hmin = i;
+		hmax = 1;
 		return res;
 	}
-	std::vector<long double> calculate_w_error()
+	std::vector<double> calculate_w_error()
 	{
 		exres.push_back(I0);
 		ss.push_back(0.0);
@@ -114,12 +122,12 @@ public:
 		hdec.push_back(0);
 		hinc.push_back(0);
 		hdec.push_back(0);
-		long double xn = x0;
-		long double In = I0;
-		long double xhalf = x0;
-		long double Ihalf, reswcap, Inext;
-		long double S;
-		long int i = 0;
+		double xn = x0;
+		double In = I0;
+		double xhalf = x0;
+		double Ihalf, reswcap, Inext;
+		double S, Sabs;
+		int i = 0;
 		while (i < n)
 		{
 			if ((xn > (xmax - prec)) && (xn < xmax))
@@ -133,7 +141,19 @@ public:
 				reswcap = RK3(xhalf, Ihalf, h / 2.0);
 				Inext = RK3(xn, In, h);
 				S = (reswcap - Inext) / 7.0;
-				if ((abs(S) >= (eps / 16.0)) && (abs(S) <= eps))
+				Sabs = abs(S);
+				if (i == 0)
+				{
+					Smin = i + 1;
+					Smax = i + 1;
+					hmin = i + 1;
+					hmax = i + 1;
+				}
+				else if (Sabs < ss[Smin])
+					Smin = i;
+				else if (Sabs > ss[Smax])
+					Smax = i;
+				if ((Sabs >= (eps / 16.0)) && (Sabs <= eps))
 				{
 					if ((xn + h) > xmax)
 					{
@@ -144,20 +164,20 @@ public:
 						xn += h;
 						xhalf = xn + h / 2.0;
 						In = RK3(xn, In, h);
-						hinc.insert(hinc.begin() + i + 2, hinc[i+1]);
-						hdec.insert(hdec.begin() + i + 2, ++(hdec[i+1]));
+						hinc.insert(hinc.begin() + i + 2, inc);
+						hdec.insert(hdec.begin() + i + 2, ++dec);
 					}
 					else
 					{
 						In = RK3(xn, In, h);
 					//	xhalf = xn + h / 2.0;
 						xn += h;
-						hinc.insert(hinc.begin() + i + 2, hinc[i+1]);
-						hdec.insert(hdec.begin() + i + 2, hdec[i+1]);
+						hinc.insert(hinc.begin() + i + 2, inc);
+						hdec.insert(hdec.begin() + i + 2, dec);
 					}
 
 				}
-				else if (abs(S) < (eps / 16.0))
+				else if (Sabs < (eps / 16.0))
 				{
 					if ((xn + h) > xmax)
 					{
@@ -168,19 +188,19 @@ public:
 						xn += h;
 						xhalf = xn + h / 2.0;
 						In = RK3(xn, In, h);
-						hinc.insert(hinc.begin() + i + 2, hinc[i+1]);
-						hdec.insert(hdec.begin() + i + 2, ++(hdec[i+1]));
+						hinc.insert(hinc.begin() + i + 2, inc);
+						hdec.insert(hdec.begin() + i + 2, ++dec);
 					}
 					else {
 						In = RK3(xn, In, h);
 					//	xhalf = xn + h / 2.0;
 						xn += h;
 						h *= 2.0;
-						hinc.insert(hinc.begin() + i + 2, ++(hinc[i+1]));
-						hdec.insert(hdec.begin() + i + 2, hdec[i+1]);
+						hinc.insert(hinc.begin() + i + 2, ++inc);
+						hdec.insert(hdec.begin() + i + 2, dec);
 					}
 				}
-				else if (abs(S) > eps)
+				else if (Sabs > eps)
 				{
 					if ((xn + h) > xmax)
 					{
@@ -191,20 +211,24 @@ public:
 						xn += h;
 						xhalf = xn + h / 2.0;
 						In = RK3(xn, In, h);
-						hinc.insert(hinc.begin() + i + 2, hinc[i+1]);
-						hdec.insert(hdec.begin() + i + 2, ++(hdec[i+1]));
+						hinc.insert(hinc.begin() + i + 2, inc);
+						hdec.insert(hdec.begin() + i + 2, ++dec);
 					}
 					else {
 						h = h / 2.0;
 						In = RK3(xn, In, h);
 					//	xhalf = xn + h / 2.0;
 						xn += h;
-						hinc.insert(hinc.begin() + i + 2, hinc[i+1]);
-						hdec.insert(hdec.begin() + i + 2, ++(hdec[i+1]));
+						hinc.insert(hinc.begin() + i + 2, inc);
+						hdec.insert(hdec.begin() + i + 2, ++dec);
 					}
 				}
 				i++;
 				S *= 8.0;
+				if (h < steps[hmin])
+					hmin = i + 1;
+				if (h > steps[hmax])
+					hmax = i + 1;;
 				reshalf.insert(reshalf.begin() + i, reswcap);
 				ss.insert(ss.begin() + i, S);
 				arg.insert(arg.begin() + i, xn);
@@ -213,9 +237,14 @@ public:
 				exres.insert(exres.begin() + i, ExactSolution(xn));
 			}		
 		}
+		N = i;
+		Xn = arg[i];
+		Vn = res[i];
+		inc = hinc[i];
+		dec = hdec[i];
 		return res;
 	}
-	long double ExactSolution(long double x)
+	double ExactSolution(double x)
 	{
 		return (E0*(R*sin(w*x) - L * w*cos(w*x) + L * w*exp(-R * x / L)) / (pow(L, 2.0) * pow(w, 2.0) + pow(R, 2.0)) + I0 * exp(-R * x / L));
 	}
@@ -225,8 +254,8 @@ public:
 			out << "There are no calculated results yet.";
 		else {
 			out << "n  " << " h n-1  " << "    x    " << "      In        " << "        I^        " << "       I      " << "   I - In    " << "       S*      " << "inc " << "dec" << std::endl;
-			long double globerr;
-			for (long int i = 0; i < vc.res.size(); i++)
+			double globerr;
+			for (int i = 0; i < vc.res.size(); i++)
 			{
 				globerr = abs(vc.exres[i] - vc.res[i]);
 				out << i << "  " << vc.steps[i] << "      " << vc.arg[i] << "    " << vc.res[i] << "    " << vc.reshalf[i] << "    " << vc.exres[i]  << "    " << globerr << "   " << vc.ss[i] << "    " << vc.hinc[i] << "  " << vc.hdec[i] << std::endl;
